@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>단어 상세 - 자유롭고 열린 제주어 사전</title>
+    <link rel="stylesheet" href="./css/style.css">
+    <script>
+        const isDark = localStorage.getItem('theme') === 'dark' || localStorage.getItem('darkMode') === 'true';
+        if (isDark) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header style="margin-bottom: 20px;"><h1 onclick="location.href='index.html'" style="font-size: 1.5rem;">자유롭고 열린 <span>제주어</span>사전</h1></header>
+
+        <article id="detailContent"></article>
+
+        <div style="display:flex; flex-wrap:wrap; gap:12px; margin-top:40px;">
+            <a id="linkJejuwat" href="#" target="_blank" class="btn-jejuwat" style="flex: 1; min-width: 200px;">제주어왓에서 보기</a>
+            <button onclick="shareWord()" class="btn-jejuwat" style="flex: 1; min-width: 200px; background: var(--black); color: var(--bg-color);">공유하기 ↗</button>
+        </div>
+        
+        <div style="text-align: center; margin-top: 50px;">
+            <a href="javascript:history.back()" style="color: var(--text-color); font-weight: bold; font-size: 1.1rem; border: 2px solid var(--border-color); padding: 12px 24px; border-radius: 30px; display: inline-block;">← 돌아가기</a>
+        </div>
+    </div>
+
+    <script src="./js/common.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const wordId = urlParams.get('id');
+        let currentItem = null;
+
+        loadDictionary().then(data => {
+            const item = data.find(w => w.id === wordId);
+            if (item) {
+                currentItem = item;
+                render(item, data);
+            }
+        });
+
+        function handleFav() {
+            const isActive = toggleFavorite(wordId);
+            const btn = document.getElementById('favBtn');
+            btn.innerHTML = isActive ? '★' : '☆';
+            btn.classList.toggle('active', isActive);
+        }
+
+        function shareWord() {
+            if (!currentItem) return;
+            if (navigator.share) {
+                navigator.share({
+                    title: `제주어: ${currentItem.word}`,
+                    text: `제주어 '${currentItem.word}'의 뜻을 확인해보세요!`,
+                    url: window.location.href
+                }).catch(console.error);
+            } else {
+                navigator.clipboard.writeText(window.location.href);
+                alert("단어 주소가 복사되었습니다.");
+            }
+        }
+
+        function render(item, fullData) {
+            const content = document.getElementById('detailContent');
+            document.getElementById('linkJejuwat').href = `https://www.jeju.go.kr/jejueo/dictionary/search.htm?id=${item.id}`;
+
+            const isFav = isFavorite(item.id);
+
+            let html = `
+                <div class="detail-header">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                            <h2 class="detail-word">
+                                ${item.word}${item.h ? `<span style="color: var(--gray-text); font-size: 1.5rem; margin-left: 6px; vertical-align: super;">${item.h}</span>` : ''}
+                            </h2>
+                            ${item.pos ? `<span style="font-size: 0.9rem; border: 1px solid var(--border-color); padding: 4px 12px; border-radius: 30px; color: var(--gray-text);">${item.pos}</span>` : ''}
+                        </div>
+                        <button id="favBtn" class="btn-fav ${isFav ? 'active' : ''}" onclick="handleFav()">${isFav ? '★' : '☆'}</button>
+                    </div>
+                    <div class="detail-std">${item.std || ''}</div>
+                </div>
+            `;
+
+            if (item.senses && item.senses.length > 0) {
+                html += `<div class="section-title">뜻풀이 및 용례</div>`;
+                html += `<div style="display: flex; flex-direction: column; gap: 35px; margin-bottom: 40px;">`;
+                item.senses.forEach(sense => {
+                    html += `<div>`;
+                    html += `<div class="detail-desc">${sense.desc}</div>`;
+                    if (sense.ex && sense.ex.length > 0) {
+                        html += `<div style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">`;
+                        sense.ex.forEach(ex => {
+                            const highlightedE = ex.e.replace(/\{([^}]+)\}/g, '<span style="color: var(--point-color); font-weight: bold;">$1</span>');
+                            html += `
+                                <div style="padding-left: 16px; border-left: 3px solid var(--border-color);">
+                                    <div style="font-weight: bold; font-size: 1.15rem; margin-bottom: 5px; line-height: 1.5;">${highlightedE}</div>
+                                    <div style="font-size: 1.05rem; line-height: 1.5; color: var(--gray-text);">${ex.t}</div>
+                                </div>
+                            `;
+                        });
+                        html += `</div>`;
+                    }
+                    html += `</div>`;
+                });
+                html += `</div>`;
+            } else {
+                html += `<div class="section-title">뜻풀이</div>`;
+                html += `<div class="detail-desc">${item.desc || ''}</div>`;
+                
+                if (item.ex && item.ex.length > 0) {
+                    html += `<div class="section-title">용례</div>`;
+                    html += `<div style="display: flex; flex-direction: column; gap: 20px; margin-bottom: 40px;">`;
+                    item.ex.forEach(ex => {
+                        const highlightedE = ex.e.replace(/\{([^}]+)\}/g, '<span style="color: var(--point-color); font-weight: bold;">$1</span>');
+                        html += `
+                            <div style="padding-left: 16px; border-left: 3px solid var(--border-color);">
+                                <div style="font-weight: bold; font-size: 1.15rem; margin-bottom: 5px; line-height: 1.5;">${highlightedE}</div>
+                                <div style="font-size: 1.05rem; line-height: 1.5; color: var(--gray-text);">${ex.t}</div>
+                            </div>
+                        `;
+                    });
+                    html += `</div>`;
+                }
+            }
+
+            if (item.phrases && item.phrases.length > 0) {
+                html += `<div class="section-title">관용구 · 속담</div>`;
+                html += `<div style="display: flex; flex-direction: column; gap: 25px; margin-bottom: 40px;">`;
+                item.phrases.forEach(phrase => {
+                    html += `
+                        <div style="padding-left: 16px; border-left: 3px solid var(--point-color);">
+                            <div style="margin-bottom: 8px; line-height: 1.5; display: flex; align-items: flex-start; gap: 10px;">
+                                <span style="flex-shrink: 0; font-size: 0.75rem; color: var(--gray-text); border: 1px solid var(--border-color); padding: 3px 8px; border-radius: 4px; margin-top: 4px;">${phrase.type}</span>
+                                <span style="font-weight: bold; font-size: 1.15rem;">${phrase.jeju}</span>
+                            </div>
+                            <div style="font-size: 1.05rem; line-height: 1.5; color: var(--gray-text);">${phrase.std}</div>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            }
+
+            if (item.reg && item.reg.length > 0) {
+                html += `<div class="section-title">조사 지역</div>`;
+                html += `<div class="region-map-container"><div class="jeju-map-wrapper">${CLEAN_JEJU_SVG}`;
+                item.reg.forEach(r => {
+                    const coords = regionCoordinates[r];
+                    if (coords) {
+                        html += `
+                            <div class="map-dot" style="left: ${coords[0]}%; top: ${coords[1]}%;"></div>
+                            <div class="map-dot-label" style="left: ${coords[0]}%; top: ${coords[1]}%;">${r}</div>
+                        `;
+                    }
+                });
+                html += `</div><div class="region-tags" style="margin-top:20px;">`;
+                item.reg.forEach(r => {
+                    html += `<span class="region-badge" onclick="location.href='region.html?name=${encodeURIComponent(r)}'">${r}</span>`;
+                });
+                html += `</div></div>`;
+            }
+
+            if (item.syn && item.syn.length > 0) {
+                html += `<div class="section-title">유의어</div><div style="display:flex; flex-wrap:wrap; gap:8px;">`;
+                item.syn.forEach(s => {
+                    const synObj = fullData.find(d => d.word.replace(/-/g,'') === s.replace(/-/g,''));
+                    if (synObj) {
+                        html += `<a href="word.html?id=${synObj.id}" class="synonym-link">${s}</a>`;
+                    } else {
+                        html += `<span class="synonym-link" style="opacity:0.4; cursor:not-allowed;">${s}</span>`;
+                    }
+                });
+                html += `</div>`;
+            }
+            content.innerHTML = html;
+        }
+    </script>
+    <script src="./js/old-hangul.js"></script>
+</body>
+</html>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>검색 결과 - 자유롭고 열린 제주어 사전</title>
+    <link rel="stylesheet" href="./css/style.css">
+    <style>
+        .search-tabs { display: flex; margin-bottom: 20px; border-bottom: 2px solid var(--border-color); }
+        .tab-btn { flex: 1; text-align: center; padding: 12px 0; cursor: pointer; font-weight: bold; color: var(--gray-text); border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s; font-size: 0.95rem; }
+        .tab-btn.active { color: var(--text-color); border-bottom: 3px solid var(--point-color); }
+        .tab-count { font-size: 0.8rem; font-weight: normal; opacity: 0.8; margin-left: 4px; }
+        .sub-result { margin-top: 15px; padding-top: 12px; border-top: 1px dashed var(--border-color); font-size: 0.95rem; }
+        .sentinel { height: 60px; display: flex; align-items: center; justify-content: center; margin-top: 20px; }
+        .loading-spinner { width: 24px; height: 24px; border: 3px solid transparent; border-top: 3px solid var(--point-color); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+    <script>
+        const isDark = localStorage.getItem('theme') === 'dark' || localStorage.getItem('darkMode') === 'true';
+        if (isDark) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header><h1 onclick="location.href='index.html'" style="font-size: 1.5rem;">자유롭고 열린 <span>제주어</span>사전</h1></header>
+
+        <div class="search-container" style="margin-bottom: 20px;">
+            <div class="search-input-wrapper">
+                <form id="searchForm" autocomplete="off">
+                    <input type="text" id="searchInput" placeholder="검색어를 입력하세요" spellcheck="false" autocomplete="off">
+                    <button type="submit" class="btn-search">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="search-tabs" id="searchTabs">
+            <div class="tab-btn active" data-tab="word">단어 <span id="count-word" class="tab-count"></span></div>
+            <div class="tab-btn" data-tab="phrase">관용구 <span id="count-phrase" class="tab-count"></span></div>
+            <div class="tab-btn" data-tab="desc">뜻풀이 <span id="count-desc" class="tab-count"></span></div>
+            <div class="tab-btn" data-tab="ex">예문 <span id="count-ex" class="tab-count"></span></div>
+        </div>
+
+        <div class="search-result-info" id="resultInfo" style="margin-bottom: 15px; color: var(--gray-text); font-size: 0.9rem;"></div>
+        <div class="result-list" id="resultList"></div>
+        <div id="sentinel" class="sentinel" style="display: none;"><div class="loading-spinner"></div></div>
+
+        <div style="text-align: center; margin-top: 50px;">
+            <a href="index.html" style="color: var(--text-color); text-decoration: none; font-weight: bold;">← 메인으로 돌아가기</a>
+        </div>
+    </div>
+
+    <script src="./js/common.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        let query = urlParams.get('q') || '';
+        let currentTab = urlParams.get('tab') || 'word';
+
+        document.getElementById('searchInput').value = query;
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            if (btn.dataset.tab === currentTab) btn.classList.add('active');
+            else btn.classList.remove('active');
+        });
+        
+        let dictionary = [];
+        let allResults = [];
+        let renderedCount = 0;
+        const PAGE_SIZE = 20;
+
+        const info = document.getElementById('resultInfo');
+        const list = document.getElementById('resultList');
+        const sentinel = document.getElementById('sentinel');
+
+        loadDictionary().then(data => {
+            dictionary = data;
+            executeSearch();
+        });
+
+        function executeSearch() {
+            const normQuery = normalize(query);
+            if (!normQuery) {
+                info.innerHTML = `검색어를 입력해주세요.`;
+                list.innerHTML = '';
+                sentinel.style.display = 'none';
+                document.querySelectorAll('.tab-count').forEach(el => el.textContent = '');
+                return;
+            }
+
+            let resultsObj = { word: [], phrase: [], desc: [], ex: [] };
+
+            dictionary.forEach(item => {
+                if (normalize(item.word).includes(normQuery) || (item.std && normalize(item.std).includes(normQuery))) {
+                    resultsObj.word.push(item);
+                }
+                if (item.phrases && item.phrases.some(p => normalize(p.jeju).includes(normQuery) || normalize(p.std).includes(normQuery))) {
+                    resultsObj.phrase.push(item);
+                }
+                if ((item.desc && normalize(item.desc).includes(normQuery)) || 
+                    (item.senses && item.senses.some(s => s.desc && normalize(s.desc).includes(normQuery)))) {
+                    resultsObj.desc.push(item);
+                }
+                if ((item.ex && item.ex.some(e => normalize(e.e).includes(normQuery) || normalize(e.t).includes(normQuery))) || 
+                    (item.senses && item.senses.some(s => s.ex && s.ex.some(e => normalize(e.e).includes(normQuery) || normalize(e.t).includes(normQuery))))) {
+                    resultsObj.ex.push(item);
+                }
+            });
+
+            document.getElementById('count-word').textContent = `(${resultsObj.word.length})`;
+            document.getElementById('count-phrase').textContent = `(${resultsObj.phrase.length})`;
+            document.getElementById('count-desc').textContent = `(${resultsObj.desc.length})`;
+            document.getElementById('count-ex').textContent = `(${resultsObj.ex.length})`;
+
+            allResults = resultsObj[currentTab];
+            info.innerHTML = `<span style="color:var(--point-color); font-weight:bold;">'${query}'</span> 검색 결과 (${allResults.length}건)`;
+            list.innerHTML = '';
+            renderedCount = 0;
+
+            if (allResults.length > 0) {
+                sentinel.style.display = 'flex';
+                renderNextPage();
+            } else {
+                list.innerHTML = `<div style="text-align:center; padding: 50px 0; color:var(--gray-text);">일치하는 결과가 없습니다.</div>`;
+                sentinel.style.display = 'none';
+            }
+        }
+
+        function renderNextPage() {
+            const normQuery = normalize(query);
+            const fragment = document.createDocumentFragment();
+            const end = Math.min(renderedCount + PAGE_SIZE, allResults.length);
+            
+            for (let i = renderedCount; i < end; i++) {
+                const item = allResults[i];
+                const div = document.createElement('div');
+                div.className = 'result-card';
+                div.onclick = () => location.href = `word.html?id=${item.id}`;
+
+                let mainDesc = ''; let extraDescCount = 0;
+                if (item.desc) { mainDesc = item.desc; } 
+                else if (item.senses && item.senses.length > 0) {
+                    mainDesc = item.senses[0].desc;
+                    if (item.senses.length > 1) extraDescCount = item.senses.length - 1;
+                }
+
+                // 뜻풀이 하이라이팅 적용
+                let descHtml = currentTab === 'desc' ? highlight(mainDesc, query) : (mainDesc || ''); 
+                if (extraDescCount > 0) {
+                    descHtml += ` <span style="color: var(--point-color); font-size: 0.85rem; font-weight: bold;">(외 ${extraDescCount}개 뜻)</span>`;
+                }
+
+                let subContent = '';
+                if (currentTab === 'phrase') {
+                    const matchedPhrases = item.phrases.filter(p => normalize(p.jeju).includes(normQuery) || normalize(p.std).includes(normQuery));
+                    subContent = matchedPhrases.map(p => `
+                        <div class="sub-result">
+                            <div style="margin-bottom: 4px; display: flex; align-items: flex-start; gap: 6px;">
+                                <span style="flex-shrink: 0; font-size: 0.75rem; color: var(--gray-text); border: 1px solid var(--border-color); padding: 3px 8px; border-radius: 4px; margin-top: 2px;">${p.type}</span>
+                                <span style="font-weight: 600; font-size: 1rem; color: var(--text-color);">${highlight(p.jeju, query)}</span>
+                            </div>
+                            <div style="font-size: 0.9rem; color: var(--text-color);">${highlight(p.std, query)}</div>
+                        </div>
+                    `).join('');
+                } 
+                else if (currentTab === 'ex') {
+                    let matchedEx = [];
+                    if (item.ex) matchedEx = matchedEx.concat(item.ex.filter(e => normalize(e.e).includes(normQuery) || normalize(e.t).includes(normQuery)));
+                    if (item.senses) item.senses.forEach(s => {
+                        if (s.ex) matchedEx = matchedEx.concat(s.ex.filter(e => normalize(e.e).includes(normQuery) || normalize(e.t).includes(normQuery)));
+                    });
+                    
+                    subContent = matchedEx.map(e => {
+                        let cleanE = e.e.replace(/\{([^}]+)\}/g, '<span style="color: var(--point-color); font-weight: bold;">$1</span>');
+                        cleanE = highlight(cleanE, query); // 예문 하이라이트
+                        return `
+                        <div class="sub-result">
+                            <div style="font-weight: 600; font-size: 1rem; margin-bottom: 4px; color: var(--text-color);">${cleanE}</div>
+                            <div style="font-size: 0.9rem; color: var(--text-color);">${highlight(e.t, query)}</div>
+                        </div>
+                        `;
+                    }).join('');
+                }
+
+                div.innerHTML = `
+                    <div>
+                        <span class="result-card-word">${currentTab === 'word' ? highlight(item.word, query) : (item.word || '')}${item.h ? `<sup style="font-size: 0.7rem; color: var(--gray-text); margin-left: 3px;">${item.h}</sup>` : ''}</span>
+                        <span class="result-card-std">${currentTab === 'word' ? highlight(item.std, query) : (item.std || '')}</span>
+                    </div>
+                    <div class="result-card-desc" style="color: var(--text-color);">${descHtml}</div>
+                    ${subContent}
+                `;
+                fragment.appendChild(div);
+            }
+            
+            list.appendChild(fragment);
+            renderedCount = end;
+            if (renderedCount >= allResults.length) sentinel.style.display = 'none';
+        }
+
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && renderedCount > 0 && renderedCount < allResults.length) {
+                setTimeout(() => { renderNextPage(); }, 100);
+            }
+        }, { rootMargin: '100px' });
+        observer.observe(sentinel);
+
+        document.getElementById('searchForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const val = document.getElementById('searchInput').value.trim();
+            if(val) {
+                addRecentSearch(val);
+                query = val;
+                history.replaceState(null, '', `search.html?q=${encodeURIComponent(query)}&tab=${currentTab}`);
+                executeSearch();
+            }
+        });
+
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                e.currentTarget.classList.add('active');
+                currentTab = e.currentTarget.dataset.tab;
+                history.replaceState(null, '', `search.html?q=${encodeURIComponent(query)}&tab=${currentTab}`);
+                if(query) executeSearch();
+            });
+        });
+    </script>
+    <script src="./js/old-hangul.js"></script>
+</body>
+</html>

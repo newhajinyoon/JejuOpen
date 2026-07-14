@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>소개 - 자유롭고 열린 제주어 사전</title>
+    <link rel="stylesheet" href="./css/style.css">
+    
+    <script>
+        const isDark = localStorage.getItem('theme') === 'dark' || localStorage.getItem('darkMode') === 'true';
+        if (isDark) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    </script>
+    <style>
+        .about-section { margin-bottom: 50px; }
+        .about-title { font-size: 1.1rem; font-weight: bold; color: var(--point-color); margin-bottom: 15px; letter-spacing: 1px; }
+        .about-text { font-size: 1.1rem; line-height: 1.8; color: var(--text-color); margin-bottom: 20px; word-break: keep-all; }
+        
+        .usage-box { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 25px 30px; margin-bottom: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); }
+        .usage-box code { background-color: rgba(255, 123, 41, 0.1); color: var(--point-color); padding: 2px 6px; border-radius: 4px; font-weight: bold; font-family: monospace; font-size: 1.1rem; }
+        
+        details { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; overflow: hidden; transition: all 0.3s ease; }
+        summary { padding: 20px 30px; font-size: 1.1rem; font-weight: bold; color: var(--text-color); cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+        summary::-webkit-details-marker { display: none; }
+        summary::after { content: '+'; color: var(--point-color); font-size: 1.5rem; transition: transform 0.3s ease; }
+        details[open] summary::after { transform: rotate(45deg); }
+        details[open] { box-shadow: 0 4px 20px rgba(0,0,0,0.03); border-color: var(--point-color); }
+        .api-content { padding: 0 30px 25px; font-size: 1rem; color: var(--gray-text); line-height: 1.7; border-top: 1px solid var(--gray-bg); margin-top: 10px; padding-top: 20px; }
+        .api-content pre { background: var(--gray-bg); padding: 15px; border-radius: 8px; overflow-x: auto; font-family: monospace; font-size: 0.9rem; margin-top: 10px; color: var(--text-color); border: 1px solid var(--border-color); }
+
+        .dev-profile { display: flex; flex-direction: column; gap: 10px; padding: 30px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; text-align: center; }
+        .dev-name { font-size: 1.4rem; font-weight: bold; color: var(--point-color); }
+        .dev-desc { font-size: 1.05rem; color: var(--text-color); margin-bottom: 15px; }
+        .dev-links a { color: var(--gray-text); text-decoration: none; border-bottom: 1px solid transparent; transition: all 0.2s; margin: 0 10px; }
+        .dev-links a:hover { color: var(--point-color); border-color: var(--point-color); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <div style="margin-bottom: 30px;">
+            <a href="index.html" style="color: var(--gray-text); font-size: 1rem; border-bottom: 1px solid var(--gray-text); padding-bottom: 4px; transition: color 0.3s;">← 메인으로 돌아가기</a>
+        </div>
+
+        <header style="margin-bottom: 60px;">
+            <h1 onclick="location.href='index.html'" style="line-height: 1.3;">
+                <span style="font-size: 1.5rem; color: var(--text-color); font-weight: normal; letter-spacing: 2px;">자유롭고 열린</span><br>
+                <span>제주어</span>사전
+            </h1>
+            <div style="margin-top: 15px; font-size: 1.05rem;">
+                <a href="https://jejuopen.kro.kr" style="color: var(--gray-text); text-decoration: none; border-bottom: 1px solid var(--gray-text); transition: color 0.3s;">jejuopen.kro.kr</a>
+            </div>
+        </header>
+
+        <div class="usage-box">
+            <div class="about-title" style="margin-bottom: 10px;">💡 옛한글(아래아) 쉽게 입력하기</div>
+            <div class="about-text" style="margin-bottom: 0;">
+                제주어를 검색할 때 필수적인 옛한글을 키보드로 아주 쉽게 입력할 수 있습니다.<br><br>
+                • <code>ㅏㅏ</code> (모음 'ㅏ'를 두 번) 누르면 <strong>아래아(ㆍ)</strong>가 입력됩니다.<br>
+                • <code>ㅑㅑ</code> (모음 'ㅑ'를 두 번) 누르면 <strong>쌍아래아(ᆢ)</strong>가 입력됩니다.
+            </div>
+        </div>
+
+        <section class="about-section">
+            <h2 class="about-title">시작의 이유</h2>
+            <p class="about-text">
+                오래전부터 제주어에 푹 빠져 있었고, 이 아름다운 언어를 담아낼 사전 구축을 여러 번 시도해 왔습니다.<br><br>
+                최근 공식 제주어 사전인 '제주어왓'이 공개되었지만, 사용하기에 다소 불편함이 있었고 무엇보다 귀중한 데이터들이 대중에게 열려있지 않았습니다. 
+                이에 누구나 쉽게 접근하고 데이터를 활용할 수 있는 진정한 의미의 <strong>'자유롭고 열린' 제주어 생태계</strong>를 직접 만들고자 이 프로젝트를 시작하게 되었습니다.
+            </p>
+        </section>
+
+        <section class="about-section">
+            <h2 class="about-title">원본 데이터 개방 & API</h2>
+            <p class="about-text">
+                사전의 이름처럼, 이 프로젝트가 가진 모든 데이터와 기능은 자유롭게 열려 있습니다. 
+                제가 직접 수집하고 크롤링하여 정제한 전체 원본 데이터(JSON)는 GitHub 레포지토리(JejuOpen)에서 누구나 제한 없이 확인하고 다운로드하실 수 있습니다.<br><br>
+                또한 개발자나 연구자가 이 사전을 활용해 새로운 앱이나 서비스를 만들 수 있도록 API 역시 개방해 두었습니다.
+            </p>
+            <details>
+                <summary>API 사용 방법 및 파라미터 확인하기</summary>
+                <div class="api-content">
+                    제주어 사전 API는 누구나 쉽게 호출하여 사용할 수 있는 JSON 포맷으로 결과를 반환합니다. CORS 제한이 없어 프론트엔드 프로젝트에서도 직접 호출이 가능합니다.<br><br>
+                    
+                    <strong>기본 요청 URL (GET)</strong>
+                    <pre>https://jejuopen.kro.kr/api.html</pre>
+                    
+                    <strong>파라미터 (Parameters)</strong>
+                    <ul style="margin-top: 10px; margin-bottom: 20px; padding-left: 20px; color: var(--text-color);">
+                        <li><code style="color:var(--point-color);">q</code> : 검색어 (생략 시 사전 전체 데이터를 페이징하여 반환합니다)</li>
+                        <li><code style="color:var(--point-color);">exact</code> : <code style="font-size:0.9em;">true</code> 입력 시 뜻풀이를 제외하고 표제어/표준어가 <b>정확히 일치</b>하는 결과만 반환합니다.</li>
+                        <li><code style="color:var(--point-color);">page</code> : 요청할 페이지 번호 (기본값: 1)</li>
+                        <li><code style="color:var(--point-color);">limit</code> : 한 페이지당 불러올 데이터 개수 (기본값: 20, 최대 100)</li>
+                    </ul>
+
+                    <strong>호출 예시</strong>
+                    <pre>// 1. '감자'를 포함하는 단어 검색 (한 페이지에 10개씩)
+https://jejuopen.kro.kr/api.html?q=감자&limit=10
+
+// 2. 표준어가 '고구마'와 '정확히 일치'하는 제주어 찾기
+https://jejuopen.kro.kr/api.html?q=고구마&exact=true</pre>
+
+                    <strong>응답 예시 (JSON)</strong>
+                    <pre>{
+  "success": true,
+  "query": "고구마",
+  "total": 2,
+  "page": 1,
+  "limit": 20,
+  "totalPages": 1,
+  "data": [
+    {
+      "id": "1-00475-0",
+      "word": "감저",
+      "pos": "명사",
+      "std": "고구마",
+      "desc": "메꽃과의 여러해살이풀.",
+      "ex": [
+        {
+          "e": "용ᄉᆞ 헹 {감저도} 놓곡 보리도 갈곡 헤여.",
+          "t": "농사지어서 고구마도 심고 보리도 갈고 해."
+        },
+        {
+          "e": "{감저를} 잘 묻으민 겨울에 썩질 아녀마씨.",
+          "t": "고구마를 잘 묻으면 겨울에 썩지를 않아요."
+        }
+      ],
+      "syn": [
+        "감ᄌᆞ",
+        "감제02"
+      ]
+    },
+    {
+      "id": "0-00407-0",
+      "word": "감제",
+      "pos": "명사",
+      "std": "고구마",
+      "desc": "메꽃과의 여러해살이풀.",
+      "ex": [
+        {
+          "e": "{감제} 싯건 숫에 바꿉서.",
+          "t": "고구마 있거든 숯과 바꾸십시오.",
+          "src": "제주어구술자료집 8, 2017"
+        },
+        {
+          "e": "이젠 다 선인장 싱검주마는 옛날은 보리도 허곡 {감제도} 헷주.",
+          "t": "이제는 모두 선인장 심고 있지마는 옛날에는 보리도 하고 고구마도 했지.",
+          "src": "제주어구술자료집 10, 2017"
+        }
+      ],
+      "reg": [
+        "동광",
+        "월령"
+      ],
+      "syn": [
+        "감저",
+        "감ᄌᆞ"
+      ],
+      "h": "02"
+    }
+  ]
+}</pre>
+                    <br>자유롭게 당신만의 재미있는 서비스나 연구에 제주어를 담아보세요!
+                </div>
+            </details>
+        </section>
+
+        <section class="about-section">
+            <h2 class="about-title">데이터의 가치</h2>
+            <p class="about-text">
+                언어는 단순한 의사소통 도구를 넘어, 그 지역의 숨결이자 세상을 바라보는 창(窓)입니다. 
+                제주어의 억양과 단어 속에는 제주의 거친 바람과 푸른 바다, 그리고 척박한 자연을 일궈낸 사람들의 지혜가 고스란히 퇴적되어 있습니다.<br><br>
+                공공의 자산인 이 언어 데이터가 닫힌 창고에 머물지 않고, 디지털 세상에서 누구나 자유롭게 꺼내 쓸 수 있는 <strong>'살아 숨 쉬는 유산'</strong>이 되기를 바랍니다.
+            </p>
+        </section>
+
+        <section class="about-section">
+            <h2 class="about-title">바라는 미래</h2>
+            <p class="about-text">
+                저는 표준어가 싫습니다.<br>
+                개인적으로 하나의 잣대와 기준만을 강요하는 문화 사대주의를 매우 경계합니다. 
+                획일화된 모습보다는, '한국'이라는 하나의 울타리 안에서도 각 지역의 고유한 언어와 정체성이 온전히 존중받기를 바랍니다.<br><br>
+                국내를 여행하더라도 마치 새로운 세계를 만나는 것처럼 다채롭고 풍요로운 문화적 경험이 굳건히 존재하길 원합니다. 
+                이 작고 열린 사전이 <strong>제주어의 부활</strong>과 <strong>고유문화 보존</strong>에 조금이나마 기여하기를 진심으로 희망합니다.
+            </p>
+        </section>
+
+        <section class="about-section" style="margin-top: 60px;">
+            <div class="dev-profile">
+                <div class="dev-name">진윤 (윤하진)</div>
+                <div class="dev-desc">제주어를 지독하게 사랑하는 개발자</div>
+                <div class="dev-links">
+                    <a href="https://github.com/newhajinyoon" target="_blank">GitHub @newhajinyoon</a>
+                    <span style="color: var(--border-color);">|</span>
+                    <a href="https://github.com/newhajinyoon/JejuOpen" target="_blank">Repository: JejuOpen</a>
+                </div>
+            </div>
+        </section>
+
+        <div style="text-align: center; margin-top: 80px;">
+            <a href="index.html" style="color: var(--gray-text); font-size: 1rem; border-bottom: 1px solid var(--gray-text); padding-bottom: 4px; transition: color 0.3s;">← 메인으로 돌아가기</a>
+        </div>
+    </div>
+</body>
+</html>

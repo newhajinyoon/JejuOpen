@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>내 단어장 - 자유롭고 열린 제주어 사전</title>
+    <link rel="stylesheet" href="./css/style.css">
+    <script>
+        const isDark = localStorage.getItem('theme') === 'dark' || localStorage.getItem('darkMode') === 'true';
+        if (isDark) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header style="margin-bottom: 30px;">
+            <h1 onclick="location.href='index.html'" style="font-size: 1.5rem;">자유롭고 열린 <span>제주어</span>사전</h1>
+        </header>
+
+        <div style="text-align: center; margin-bottom: 50px;">
+            <h2 style="font-size: 2rem; margin: 0; color: var(--text-color); font-weight: normal;">내 단어장</h2>
+        </div>
+
+        <div class="result-list" id="favList"></div>
+
+        <div style="text-align: center; margin-top: 80px;">
+            <a href="index.html" style="color: var(--gray-text); font-size: 1rem; border-bottom: 1px solid var(--gray-text); padding-bottom: 4px;">← 메인으로 돌아가기</a>
+        </div>
+    </div>
+
+    <script src="./js/common.js"></script>
+    <script>
+        loadDictionary().then(dictionary => {
+            const favIds = getFavorites();
+            const listDiv = document.getElementById('favList');
+            
+            if (favIds.length === 0) {
+                listDiv.innerHTML = `
+                    <div style="text-align:center; padding: 60px 0; color:var(--gray-text);">
+                        <div style="font-size: 4rem; margin-bottom: 15px; opacity: 0.5;">🗿</div>
+                        <div style="font-size: 1.2rem; font-weight:bold;">단어장에 저장된 단어가 없습니다.</div>
+                        <div style="margin-top: 10px;">단어를 검색하고 별표(⭐)를 눌러 추가해보세요!</div>
+                    </div>`;
+                return;
+            }
+
+            const favWords = dictionary.filter(w => favIds.includes(w.id)).reverse();
+            
+            listDiv.innerHTML = favWords.map(item => {
+                const mainDesc = item.desc || (item.senses && item.senses.length > 0 ? item.senses[0].desc : '');
+                return `
+                <div class="result-card" onclick="location.href='word.html?id=${item.id}'">
+                    <div>
+                        <span class="result-card-word">${item.word}${item.h ? `<sup style="font-size:0.75rem; color:var(--gray-text); margin-left:3px;">${item.h}</sup>` : ''}</span>
+                        <span class="result-card-std">${item.std || ''}</span>
+                    </div>
+                    <div class="result-card-desc" style="color: var(--text-color);">${mainDesc}</div>
+                </div>
+                `;
+            }).join('');
+        });
+    </script>
+    <script src="./js/old-hangul.js"></script>
+</body>
+</html>

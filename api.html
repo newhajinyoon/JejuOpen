@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>자유롭고 열린 제주어 API</title>
+</head>
+<body>
+    <script src="./js/common.js"></script>
+    <script>
+        // 1. URL 파라미터 가져오기 (고도화됨)
+        const urlParams = new URLSearchParams(window.location.search);
+        const query = urlParams.get('q') || '';
+        const exactMatch = urlParams.get('exact') === 'true'; // 정확히 일치 여부
+        let page = parseInt(urlParams.get('page')) || 1; // 현재 페이지 (기본 1)
+        let limit = parseInt(urlParams.get('limit')) || 20; // 한 번에 불러올 갯수 (기본 20)
+        
+        // 최대 limit 제한 (보안 및 성능 목적)
+        if (limit > 100) limit = 100;
+        if (page < 1) page = 1;
+        
+        // 2. 화면에 있는 모든 HTML 요소 제거 (순수 텍스트만 남기기 위함)
+        document.head.innerHTML = '';
+        
+        loadDictionary().then(dictionary => {
+            let response = {
+                success: true,
+                query: query,
+                total: 0,
+                page: page,
+                limit: limit,
+                totalPages: 0,
+                data: []
+            };
+
+            let filteredData = [];
+
+            if (query) {
+                const normQuery = normalize(query);
+                
+                filteredData = dictionary.filter(item => {
+                    if (exactMatch) {
+                        // 정확히 일치 모드: 제주어 표제어나 표준어가 검색어와 완전히 일치할 때만
+                        return normalize(item.word) === normQuery || (item.std && normalize(item.std) === normQuery);
+                    } else {
+                        // 기본 모드: 단어, 표준어, 뜻풀이 중 하나라도 포함되어 있으면 반환
+                        const matchWord = normalize(item.word).includes(normQuery) || (item.std && normalize(item.std).includes(normQuery));
+                        const matchDesc = (item.desc && normalize(item.desc).includes(normQuery)) || 
+                                          (item.senses && item.senses.some(s => s.desc && normalize(s.desc).includes(normQuery)));
+                        return matchWord || matchDesc;
+                    }
+                });
+            } else {
+                // 검색어가 없으면 전체 사전 데이터를 반환
+                filteredData = dictionary;
+                response.message = "검색어가 제공되지 않아 전체 목록을 반환합니다.";
+            }
+
+            // 페이징 처리
+            response.total = filteredData.length;
+            response.totalPages = Math.ceil(response.total / limit);
+            
+            const startIndex = (page - 1) * limit;
+            const endIndex = startIndex + limit;
+            response.data = filteredData.slice(startIndex, endIndex);
+
+            // 3. 화면(body)에 JSON을 텍스트로 그대로 출력
+            document.body.style.margin = "0";
+            document.body.style.fontFamily = "monospace";
+            document.body.style.wordWrap = "break-word";
+            document.body.style.whiteSpace = "pre-wrap";
+            document.body.textContent = JSON.stringify(response, null, 2);
+            
+        }).catch(err => {
+            // 에러 발생 시 예외 처리
+            document.body.textContent = JSON.stringify({
+                success: false,
+                message: "사전 데이터를 불러오는 데 실패했습니다."
+            }, null, 2);
+        });
+    </script>
+</body>
+</html>
