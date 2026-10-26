@@ -1,17 +1,20 @@
 /** ====== 1. 데이터 로드 및 캐싱 ====== */
+let _dictPromise = null;
 async function loadDictionary() {
-    const cached = sessionStorage.getItem('jeju_dict');
-    if (cached) return JSON.parse(cached);
-    
-    try {
-        const res = await fetch('./js/jeju_complete.json');
-        const data = await res.json();
-        sessionStorage.setItem('jeju_dict', JSON.stringify(data));
-        return data;
-    } catch (e) {
-        console.error("자유롭고 열린 제주어 사전 데이터를 불러오는데 실패했습니다.", e);
-        return [];
-    }
+    // 같은 페이지에서는 한 번만 불러옴
+    if (_dictPromise) return _dictPromise;
+    _dictPromise = (async () => {
+        try {
+            const res = await fetch('./js/jeju_complete.json');
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return await res.json();
+        } catch (e) {
+            console.error("자유롭고 열린 제주어 사전 데이터를 불러오는데 실패했습니다.", e);
+            _dictPromise = null;
+            return [];
+        }
+    })();
+    return _dictPromise;
 }
 
 const normalize = (str) => (str ? String(str).replace(/-/g, '').trim() : '');
